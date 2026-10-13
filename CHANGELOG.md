@@ -15,6 +15,12 @@
 
 - 版本号跳过 1.5.2。该版本号在本次文档修订发布之前，已被一次发布机制探针占用（探针内容与 1.5.1 相同，挂在 `probe` 标签下，仅用于判定发布是否真的落到 registry）。npm 不允许覆盖已发布的版本号，而删除它需要账号 2FA，故本次改用 1.5.3。`latest` 始终指向正式版本，`npm install` 不受影响。
 
+### 发布
+
+- GitHub: https://github.com/runcat-tommy/dsh-mcp-mini-manager
+- npm: https://www.npmjs.com/package/dsh-mcp-mini-manager
+- 安装：`dsh plugin --profile web add dsh-mcp-mini-manager`
+
 ## [1.5.1] - 2026-10-13
 
 首个发布版本。版本号从 1.5.1 起（首个公开发布，非 1.0.0）。
