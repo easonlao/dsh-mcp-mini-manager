@@ -2,9 +2,9 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [1.0.0] - 2026-10-13
+## [1.5.1] - 2026-10-13
 
-首个版本。
+首个发布版本。版本号从 1.5.1 起（首个公开发布，非 1.0.0）。
 
 ### 新增
 
@@ -18,6 +18,7 @@
 - 中英双语，跟随 DSH 界面语言；样式只使用 `--dsw-*` / `--ds-*` 主题令牌。
 - 停用/恢复**不需要重启**：写入的是 profile 用户层补丁，由 DSH 的 `watchUserPatches` 热应用；页面据实报告「已即时生效」还是「重启后生效」。
 - `screenshots.json` 与 `assets/` 下的中英界面预览图（市场详情页的预览图来自它，而不是从 README 抽图）。
+- npm 上发布英文 README（`"readme": "README.en.md"`），与已发布的同类插件一致；npm 默认会发中文的 `README.md`。
 
 ### 修复
 
@@ -46,4 +47,5 @@
 ### 发布
 
 - GitHub: https://github.com/runcat-tommy/dsh-mcp-mini-manager
-- 安装：`dsh plugin --profile web add github:runcat-tommy/dsh-mcp-mini-manager`
+- npm: https://www.npmjs.com/package/dsh-mcp-mini-manager
+- 安装：`dsh plugin --profile web add github:runcat-tommy/dsh-mcp-mini-manager` 或 `dsh plugin --profile web add dsh-mcp-mini-manager`

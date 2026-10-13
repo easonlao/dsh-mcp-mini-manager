@@ -845,3 +845,24 @@ test('a host with no loader still serves a catalog that says so', async () => {
   assert.equal(json.loaderError, 'loader-unavailable')
   assert.deepEqual(json.servers, [])
 })
+
+test('the reported version matches package.json, and npm publishes the English README', () => {
+  const here = new URL('..', import.meta.url)
+  const manifest = JSON.parse(readFileSync(new URL('package.json', here), 'utf8'))
+  const source = readFileSync(new URL('lib/index.js', here), 'utf8')
+  const literal = /const VERSION = '([^']+)'/.exec(source)
+  assert.ok(literal !== null, 'lib/index.js must declare VERSION so this can be checked')
+  // The page shows this version and the catalog payload carries it; a silent drift
+  // from package.json is the kind of thing nobody notices until a bug report cites
+  // a version that never existed.
+  assert.equal(literal[1], manifest.version, 'VERSION and package.json must agree')
+  // Every published sibling plugin (dsh-unitverse, dsh-theme-manager,
+  // dsh-chinese-poetry) ships an English README to npm — verified against the
+  // registry. npm would otherwise default to the Chinese README.md.
+  assert.equal(manifest.readme, 'README.en.md', 'npm must publish the English README')
+  assert.equal(
+    existsSync(new URL('README.en.md', here)),
+    true,
+    'the declared readme must exist, or npm publish silently omits it',
+  )
+})
