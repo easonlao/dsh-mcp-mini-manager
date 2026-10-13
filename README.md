@@ -97,17 +97,28 @@ dsh plugin --profile web add github:runcat-tommy/dsh-mcp-mini-manager
 - **要注意**：需要本机有 `git`。仓库里**已经提交了全部运行产物**（`lib/` 三个文件）且没有任何 `preinstall`/`install`/`postinstall`/`prepare` 脚本，所以通常不会触发构建审批；若 DSH 仍然要求批准，按提示同意即可。
 - **更新**：重跑同一条命令。
 
-### ② 下载到本地再装
+### ② 下载下来再装
+
+**不用 `git`、不用 npm**，把仓库当一个压缩包取下来：
+
+1. 打开 https://github.com/runcat-tommy/dsh-mcp-mini-manager
+2. 点绿色的 **Code** → **Download ZIP**
+3. 解压到一个固定目录，例如 `D:\plugins\dsh-mcp-mini-manager`（**别放临时目录**，路径会写进 profile 依赖）
+4. 指向解压出来的目录：
+
+```bash
+dsh plugin --profile web add D:\plugins\dsh-mcp-mini-manager
+```
+
+习惯用命令行的话，等价于：
 
 ```bash
 git clone https://github.com/runcat-tommy/dsh-mcp-mini-manager.git
 dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
 ```
 
-（也可以直接下载 ZIP 解压，然后指向解压出来的目录。）
-
-- **适合**：想改代码、想锁版本、或本机没有网络访问 npm 的场景。
-- **要注意**：无需构建审批。`dsh plugin` 实际是 `pnpm` 的转发壳——它在 profile 目录里跑 `pnpm add`，然后按**装载后的真实状态**对齐 `dsh.profile.bundles`。所以也可以用 `pnpm add link:<路径>` 手工挂载，此时要自己把包名加进 `dsh.profile.bundles`（`pnpm add` 不会自动加）：
+- **适合**：想改代码、想锁死某个版本、本机没有 `git`、或访问不了 npm。
+- **要注意**：无需构建审批，仓库里已带全部运行产物。`dsh plugin` 实际是 `pnpm` 的转发壳——它在 profile 目录里跑 `pnpm add`，然后按**装载后的真实状态**对齐 `dsh.profile.bundles`。所以也可以用 `pnpm add link:<路径>` 手工挂载，此时要自己把包名加进 `dsh.profile.bundles`（`pnpm add` 不会自动加）：
 
   ```json
   {
@@ -119,7 +130,7 @@ dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
   }
   ```
 
-- **更新**：`git pull` → 重跑一次 `dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager` → 重启。
+- **更新**：下载新一份覆盖旧目录（或 `git pull`），重跑 `add`，再重启。
 
 ### ③ 从 npm 装
 
@@ -127,8 +138,10 @@ dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
 dsh plugin --profile web add dsh-mcp-mini-manager
 ```
 
-- **适合**：最省事，包内已带完整产物，安装时不执行 `prepare`。
-- **要注意**：npm 上的版本可能落后于 GitHub `main`；想尝新就走 ① 或 ②。
+包地址：https://www.npmjs.com/package/dsh-mcp-mini-manager
+
+- **适合**：最省事。包内已带完整运行产物（`lib/` 三个文件），安装时不执行 `prepare`，也不触发构建审批。
+- **要注意**：npm 上发布的是**打过标签的稳定版本**；想跟着 `main` 上的最新提交跑就走 ① 或 ②。当前 npm `latest` 与仓库 `main` 是同一个版本。
 - **更新**：`dsh plugin --profile web up dsh-mcp-mini-manager`。
 
 ### 三路对照
@@ -136,8 +149,10 @@ dsh plugin --profile web add dsh-mcp-mini-manager
 | | 命令 | 需要什么 | 构建审批 | 更新方式 |
 |---|---|---|---|---|
 | ① GitHub 直装 | `… add github:runcat-tommy/dsh-mcp-mini-manager` | 本机有 `git` | 通常不需要（产物已提交、无 install 类脚本） | 重跑同一命令 |
-| ② 下载到本地 | `git clone …` 后 `… add D:\path\to\repo` | 无 | 不需要 | `git pull` + 重跑 `add` + 重启 |
+| ② 下载再装 | 下载 ZIP 解压后 `… add D:\plugins\dsh-mcp-mini-manager` | 无 | 不需要 | 覆盖目录 + 重跑 `add` + 重启 |
 | ③ npm | `… add dsh-mcp-mini-manager` | 无 | 不需要 | `… up dsh-mcp-mini-manager` |
+
+三条路装的是同一个包、同一份代码，区别只在"怎么拿到"和"以后怎么更新"。
 
 **三条路都必须重启一次 `dsh web`**——新 bundle 是在启动时由 profile manifest 读取的，只刷新页面不够（页面会明确提示「插件的主机半侧没有响应」）。装好之后，**停用/恢复 MCP 本身都不需要重启**：写入的是 profile 自己的补丁层，DSH 会热加载它。
 

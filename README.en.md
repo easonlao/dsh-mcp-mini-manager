@@ -97,17 +97,28 @@ dsh plugin --profile web add github:runcat-tommy/dsh-mcp-mini-manager
 - **Watch out**: needs `git` on the machine. The repository **already commits every runtime artifact** (`lib/`) and declares no `preinstall`/`install`/`postinstall`/`prepare` script, so a build approval is usually not triggered; if DSH asks anyway, approve it.
 - **Update**: rerun the same command.
 
-### ② Clone it and install locally
+### ② Download it and install locally
+
+**No `git`, no npm** — just take the repository down as an archive:
+
+1. Open https://github.com/runcat-tommy/dsh-mcp-mini-manager
+2. Click the green **Code** button → **Download ZIP**
+3. Extract it to a permanent directory, e.g. `D:\plugins\dsh-mcp-mini-manager` (**not** a temp folder — the path ends up in your profile's dependencies)
+4. Point DSH at the extracted directory:
+
+```bash
+dsh plugin --profile web add D:\plugins\dsh-mcp-mini-manager
+```
+
+The command-line equivalent, if you prefer `git`:
 
 ```bash
 git clone https://github.com/runcat-tommy/dsh-mcp-mini-manager.git
 dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
 ```
 
-(A downloaded ZIP extracted anywhere works just as well — point at that directory.)
-
-- **For**: changing the code, pinning a version, or a machine that cannot reach npm.
-- **Watch out**: no build approval. `dsh plugin` is really a `pnpm` forwarding shell — it runs `pnpm add` inside the profile directory and then aligns `dsh.profile.bundles` to the **real loaded state**. So you can also mount it by hand with `pnpm add link:<path>`, in which case you must add the package name to `dsh.profile.bundles` yourself (`pnpm add` will not):
+- **For**: changing the code, pinning a specific version, a machine without `git`, or one that cannot reach npm.
+- **Watch out**: no build approval, and the repository already carries every runtime artifact. `dsh plugin` is really a `pnpm` forwarding shell — it runs `pnpm add` inside the profile directory and then aligns `dsh.profile.bundles` to the **real loaded state**. So you can also mount it by hand with `pnpm add link:<path>`, in which case you must add the package name to `dsh.profile.bundles` yourself (`pnpm add` will not):
 
   ```json
   {
@@ -119,7 +130,7 @@ dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
   }
   ```
 
-- **Update**: `git pull` → rerun `dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager` → restart.
+- **Update**: download a fresh copy over the old directory (or `git pull`), rerun `add`, restart.
 
 ### ③ From npm
 
@@ -127,8 +138,10 @@ dsh plugin --profile web add D:\path\to\dsh-mcp-mini-manager
 dsh plugin --profile web add dsh-mcp-mini-manager
 ```
 
-- **For**: the least effort; the tarball ships the full artifacts and `prepare` does not run on install.
-- **Watch out**: the npm version may lag GitHub `main`; take ① or ② to live on the edge.
+Package page: https://www.npmjs.com/package/dsh-mcp-mini-manager
+
+- **For**: the least effort. The tarball ships the full runtime artifacts (`lib/`), `prepare` does not run on install, and no build approval is triggered.
+- **Watch out**: what npm carries is a **tagged, stable release**; take ① or ② to follow the newest commits on `main`. Right now npm's `latest` and the repository's `main` are the same version.
 - **Update**: `dsh plugin --profile web up dsh-mcp-mini-manager`.
 
 ### The three side by side
@@ -136,8 +149,10 @@ dsh plugin --profile web add dsh-mcp-mini-manager
 | | Command | Requires | Build approval | Update |
 |---|---|---|---|---|
 | ① GitHub | `… add github:runcat-tommy/dsh-mcp-mini-manager` | `git` on the machine | Usually none (artifacts committed, no install scripts) | Rerun the same command |
-| ② Local clone | `git clone …` then `… add D:\path\to\repo` | nothing | none | `git pull` + rerun `add` + restart |
+| ② Download | extract the ZIP, then `… add D:\plugins\dsh-mcp-mini-manager` | nothing | none | overwrite the directory + rerun `add` + restart |
 | ③ npm | `… add dsh-mcp-mini-manager` | nothing | none | `… up dsh-mcp-mini-manager` |
+
+All three install the same package and the same code; they differ only in how you get it and how you update it later.
 
 **All three require one `dsh web` restart** — a new bundle is read from the profile manifest at startup, so refreshing the page is not enough (the page will say its host half did not answer). Once installed, **disabling and restoring an MCP server never needs a restart**: the write goes into the profile's own patch layer, which DSH hot-reloads.
 
