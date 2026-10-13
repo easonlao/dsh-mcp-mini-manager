@@ -1,0 +1,16 @@
+# dsh-mcp-mini-manager bundle patch: contributes one profile row.
+#
+# The node half (lib/index.js) mounts the plugin's read/disable/restore HTTP
+# routes on the host `webServer` service; the browser half ships via
+# exports["./client"] and the package.json `dsh.client` declaration, where it
+# registers one `settings.section` entry — the same level as the built-in
+# 插件 (Plugins) section.
+#
+# This plugin contributes no MCP server of its own. It reads the rows that
+# already exist, so the row below is the only thing it adds to the tree. Rows
+# this plugin *disables* are appended to the profile's own cordis.patch.yml at
+# runtime, never written back here.
+
+- insert:
+    - id: dsh-mcp-mini-manager
+      name: 'dsh-mcp-mini-manager'

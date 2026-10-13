@@ -1,0 +1,70 @@
+{
+  "name": "dsh-mcp-mini-manager",
+  "description": "Minimal MCP manager for DeepSeek Harness Web: one Settings page in the same sidebar row as Plugins that lists every MCP server this DSH actually loads, with each server's summary and live state, and takes any of them out of service (removal writes a recoverable disable patch). MCP极简管理：与「插件」同级的一页设置，列出当前 DSH 装的全部 MCP 及其简介与状态，并可逐个移除（移除写入可恢复的停用补丁）。",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "mcp",
+    "model-context-protocol",
+    "mcp-manager",
+    "mcp-mini-manager"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runcat-tommy/dsh-mcp-mini-manager.git"
+  },
+  "homepage": "https://github.com/runcat-tommy/dsh-mcp-mini-manager#readme",
+  "bugs": {
+    "url": "https://github.com/runcat-tommy/dsh-mcp-mini-manager/issues"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./catalog": {
+      "default": "./lib/catalog.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    },
+    "marketplace": {
+      "profiles": ["web"],
+      "requiresBuildApproval": false,
+      "requiresRestart": true,
+      "manualSteps": false
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib",
+    "CHANGELOG.md",
+    "README.md",
+    "README.en.md"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "smoke": "node scripts/verify-e2e.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,24 @@
+# Every file in this repository is committed with LF endings, matching the sibling
+# dsh-* plugin repositories. `text=auto` alone would check JavaScript out as CRLF
+# on Windows, which would then show up as a whole-file diff on the next commit.
+* text=auto eol=lf
+
+# The client half is served to a browser verbatim, and the patch layer is parsed
+# by DSH's own loader; neither tolerates rewritten endings.
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+
+# Windows batch/PowerShell wrappers, if any are ever added, must stay CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
