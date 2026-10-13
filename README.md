@@ -9,6 +9,8 @@ DSH 的 **MCP 极简管理**：在「设置」里加一页，与「插件」同�
 - **英文名**：MCP Mini Manager
 - **设置页 id**：`mcp-mini-manager`（`settings.section`，order 16，紧接「插件」）
 
+![MCP 极简管理设置页（中文界面）](assets/preview-zh.jpg)
+
 ## 它解决什么
 
 DSH 里没有一处能看到「我现在装了哪些 MCP」。要知道这件事，只能去翻 `cordis.patch.yml`、再看各个包的 bundle 补丁，还要自己判断哪一行是 MCP；移除一个 MCP 更没有任何界面入口。这一页把这两件事做成一步。
@@ -199,3 +201,5 @@ npm run smoke     # 端到端冒烟：在一个进程里加载两侧真入口，
 ## 许可
 
 MIT
+
+变更记录见 [CHANGELOG.md](CHANGELOG.md)。

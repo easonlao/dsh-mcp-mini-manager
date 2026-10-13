@@ -16,6 +16,8 @@
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
 
+# Screenshots must survive byte for byte: the marketplace reads them straight from
+# the repository, and a filtered text check-out would corrupt them.
 *.png binary
 *.jpg binary
 *.jpeg binary

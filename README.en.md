@@ -9,6 +9,8 @@
 - **English name**: MCP Mini Manager
 - **Settings page id**: `mcp-mini-manager` (`settings.section`, order 16, right after Plugins)
 
+![The MCP Mini Manager settings page (English UI)](assets/preview-en.jpg)
+
 ## What it fixes
 
 DSH has no single place that shows which MCP servers are installed. Finding out means reading `cordis.patch.yml`, then the patch layers of every bundle, and deciding by hand which rows are MCP; removing one has no UI entry point at all. This page makes both a one-step operation.
@@ -199,3 +201,5 @@ The smoke script points `$DSH_HOME` at a scratch directory on purpose: removal r
 ## License
 
 MIT
+
+See [CHANGELOG.md](CHANGELOG.md) for the change history.

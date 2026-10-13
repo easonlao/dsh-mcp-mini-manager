@@ -30,11 +30,8 @@ import {
 
 /** Every sandbox created in this file, torn down at the end. */
 const sandboxes = []
+/** The developer's own `DSH_HOME`, restored by `after()`. */
 const savedHome = process.env.DSH_HOME
-
-beforeEach(() => {
-  delete process.env.DSH_HOME
-})
 
 after(() => {
   if (savedHome === undefined) delete process.env.DSH_HOME
@@ -55,6 +52,13 @@ after(() => {
 function sandbox(patchText = '# mine\n[]\n') {
   const home = mkdtempSync(join(tmpdir(), 'mmm-'))
   sandboxes.push(home)
+  // Point the harness home at the sandbox. Tests that go through `mount()` are
+  // isolated by the fake Loader's base URL, but a test that calls `apply(ctx)`
+  // directly has nothing else to resolve against — without this it reads the
+  // developer's real `~/.dsh`, which makes the test pass or fail depending on
+  // what that machine happens to have configured, and lets a write land in a
+  // real profile. `after()` restores the previous value.
+  process.env.DSH_HOME = home
   const dir = join(home, 'profiles', 'web')
   mkdirSync(dir, { recursive: true })
   writeFileSync(join(dir, PROFILE_PATCH_FILENAME), patchText, 'utf8')
@@ -76,9 +80,11 @@ function sandbox(patchText = '# mine\n[]\n') {
  *
  * @param patchPath - the profile patch layer to derive from.
  * @param rows - the rows the bundle layers contribute.
+ * @param options - `asComposedPath` models the real Loader, which reports a row
+ *   declared inside a group by its full `group:child` path.
  * @returns the live entries, with `fiber.state === 2` on each.
  */
-function liveEntriesFrom(patchPath, rows) {
+function liveEntriesFrom(patchPath, rows, options = {}) {
   const text = readFileSync(patchPath, 'utf8')
   const disabled = new Set(
     parseYamlSubset(text)
@@ -87,7 +93,12 @@ function liveEntriesFrom(patchPath, rows) {
   )
   return rows
     .filter((row) => !disabled.has(row.options.id))
-    .map((row) => ({ id: row.options.id, options: row.options, disabled: false, fiber: { state: 2 } }))
+    .map((row) => ({
+      id: options.asComposedPath === true ? `include:${row.options.id}` : row.options.id,
+      options: row.options,
+      disabled: false,
+      fiber: { state: 2 },
+    }))
 }
 
 /** One fake `@deepseek-ai/dsh-mcp-client` loader row. */
@@ -111,7 +122,7 @@ function mcpRow(id, config, options = {}) {
  * @param tools - tool schemas `ctx.tools.schemas()` should report.
  * @returns the context, recorded routes, and the effect labels `apply` registered.
  */
-function fakeContext(patchPath, rows, tools = []) {
+function fakeContext(patchPath, rows, tools = [], options = {}) {
   const routes = new Map()
   const effects = []
   const info = []
@@ -130,7 +141,7 @@ function fakeContext(patchPath, rows, tools = []) {
       if (service === 'loader') {
         return {
           config: { baseUrl: patchPath.replace(/[\\/][^\\/]+$/, '') },
-          entries: () => liveEntriesFrom(patchPath, rows),
+          entries: () => liveEntriesFrom(patchPath, rows, options),
         }
       }
       if (service === 'tools') return { schemas: () => tools }
@@ -218,9 +229,9 @@ async function call(handler, request) {
 }
 
 /** Wire `apply()` over one sandbox and return the callable surface. */
-function mount(sandboxed, rows, tools = []) {
+function mount(sandboxed, rows, tools = [], options = {}) {
   process.env.DSH_HOME = sandboxed.home
-  const fake = fakeContext(sandboxed.patchPath, rows, tools)
+  const fake = fakeContext(sandboxed.patchPath, rows, tools, options)
   apply(fake.ctx)
   const invoke = async (path, method = 'GET', body) => {
     const handler = fake.routes.get(path)
@@ -332,8 +343,46 @@ test('a row disabled in the patch layer is reported disabled, with no live fiber
   assert.equal(json.servers.length, 1)
   const [server] = json.servers
   assert.equal(server.state, 'disabled')
-  // A user-authored patch is not one of ours, so it has no managed block.
-  assert.equal(server.inUserPatch, false)
+  // This row is described by the file the user edits — they disabled it by hand —
+  // so `inUserPatch` is true even though the block carries no marker of ours.
+  // `inUserPatch` answers "can I see and change this myself?", not "did this
+  // plugin write it?"; a row living only inside a package's layer answers false.
+  assert.equal(server.inUserPatch, true)
+})
+
+test('a row declared by the user as an insert is one row, and it is theirs', async () => {
+  // The shape a real DSH profile uses to add an MCP by hand: an `insert` list in
+  // the user's own layer, quoted module name, and a secret read through `!!js`.
+  const box = sandbox(
+    [
+      '# mine',
+      '',
+      '- insert:',
+      '    - id: mcp-grafana',
+      "      name: '@deepseek-ai/dsh-mcp-client'",
+      '      config:',
+      '        serverName: grafana',
+      '        transport: stdio',
+      '        command: mcp-grafana.exe',
+      '        env:',
+      "          TOKEN: !!js process.env.GRAFANA_TOKEN ?? ''",
+      '',
+    ].join('\n'),
+  )
+  // The live tree reports the composed path, not the declared id: the root include
+  // namespaces its children, so the row `mcp-grafana` is loaded as
+  // `include:mcp-grafana`. Both halves of this shape are real; the bug this guards
+  // against was reporting them as two different servers, one of them "unobserved",
+  // and pointing disable at an id no patch can resolve.
+  const row = mcpRow('mcp-grafana', { serverName: 'grafana', transport: 'stdio', command: 'mcp-grafana.exe' })
+  const mounted = mount(box, [row], [], { asComposedPath: true })
+  const { json } = await mounted.get(ENDPOINTS.catalog)
+  assert.equal(json.servers.length, 1, 'the same server must not be listed twice')
+  const [server] = json.servers
+  assert.equal(server.rowId, 'mcp-grafana', 'the declared id is the one a patch can target')
+  assert.equal(server.state, 'active', 'the live fiber is what makes it installed')
+  assert.equal(server.origin, 'user-patch', 'the user wrote this row in their own layer')
+  assert.equal(server.inUserPatch, true)
 })
 
 test('the catalog names the profile, the layers, and the write target', async () => {
