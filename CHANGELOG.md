@@ -15,11 +15,20 @@
 
 - 版本号跳过 1.5.2。该版本号在本次文档修订发布之前，已被一次发布机制探针占用（探针内容与 1.5.1 相同，挂在 `probe` 标签下，仅用于判定发布是否真的落到 registry）。npm 不允许覆盖已发布的版本号，而删除它需要账号 2FA，故本次改用 1.5.3。`latest` 始终指向正式版本，`npm install` 不受影响。
 
+### 工具（仅仓库，不在 npm 包内）
+
+- 新增 `test/market-gates.test.mjs`：把市场收录的**静态门槛**钉成测试。这些门槛会**静默失效**——代码与单测全绿，市场却不再收录或降级为"引导安装"。共 29 条断言，覆盖 manifest 形状、`dsh.bundle.patch` 的安全性、patch 里 `insert` 的 `name` 是否等于 npm 包名、`.gitignore` 是否吞掉 `lib/`、`dsh.marketplace` 四件套、README 是否给出 `add github:owner/repo` 且 owner/repo 与仓库一致、`screenshots.json` 的路径与格式。每条断言都写明"不满足要付出什么代价"，失败时给的是后果而不是断言文本。
+  - 默认离线运行，随 `npm test` 执行；需要联网的两组（`dsh-plugin` topic、npm 与仓库版本一致）用 `MMM_ONLINE=1` 开启。
+  - 断言本身做了变异验证：改坏 insert 名、让 `.gitignore` 吞掉 `lib/`、翻转 `requiresRestart`、指向不存在的截图、放入 `.svg`、放入过小图片——6 种改坏方式都被正确捕获，确认不是"永远通过"的空断言。
+- 新增 `scripts/registry-inclusion.mjs`：查中心 registry 快照（约 17 MB）里本仓库是否已被自动收录，并打印条目的 `verifiedCommit` / `verifiedAt` / `requiresRestart` 等字段。镜像依次尝试 jsDelivr、raw.githubusercontent.com，最后回退到 `curl`（该文件用 Node 的 fetch 拉取会间歇性 ECONNRESET，jsDelivr 有时直接 403）。**未收录不等于失败**，也不该据此提 issue：扫描按天刷新，0 星条目还会被"按 star 降序截断前 1000"挤掉。
+  - 注意：`scripts/` 不在 `files` 里，所以没有把它写进 `package.json` 的 `scripts` 字段——否则 npm 上的包会引用一个不存在的文件。想直接跑这个脚本请用仓库副本，或在下个版本把 `scripts` 一并纳入发布。
+
 ### 发布
 
 - GitHub: https://github.com/runcat-tommy/dsh-mcp-mini-manager
 - npm: https://www.npmjs.com/package/dsh-mcp-mini-manager
 - 安装：`dsh plugin --profile web add dsh-mcp-mini-manager`
+- 市场登记：`awesome-dsh-plugin/awesome-dsh-plugin` PR [#7422](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7422)（单 yml）、`0xsline/awesome-deepseek-harness` PR [#709](https://github.com/0xsline/awesome-deepseek-harness/pull/709)（README 中英各一行）
 
 ## [1.5.1] - 2026-10-13
 
