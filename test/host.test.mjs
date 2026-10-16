@@ -857,12 +857,34 @@ test('the reported version matches package.json, and npm publishes the English R
   // a version that never existed.
   assert.equal(literal[1], manifest.version, 'VERSION and package.json must agree')
   // Every published sibling plugin (dsh-unitverse, dsh-theme-manager,
-  // dsh-chinese-poetry) ships an English README to npm — verified against the
-  // registry. npm would otherwise default to the Chinese README.md.
-  assert.equal(manifest.readme, 'README.en.md', 'npm must publish the English README')
+  // dsh-chinese-poetry) shows an English README on npm.
+  //
+  // The way to get there is NOT a `readme` field in package.json. npm 10.9.3
+  // reports that field verbatim as the packument's `.readme`, so the npm page
+  // rendered the literal string "README.en.md" (length 12) instead of any prose —
+  // measured on the published 1.5.3. The siblings carry no such field and their
+  // `.readme` is the full body (9–31 KB).
+  //
+  // The publish route is therefore: copy README.en.md over README.md for the
+  // publish, then `git checkout -- README.md` immediately after. This case pins
+  // the field's absence, plus the facts that route depends on.
   assert.equal(
-    existsSync(new URL('README.en.md', here)),
-    true,
-    'the declared readme must exist, or npm publish silently omits it',
+    Object.hasOwn(manifest, 'readme'),
+    false,
+    'no package.json readme field: npm reports it verbatim and the page loses its README',
+  )
+  const english = new URL('README.en.md', here)
+  assert.equal(existsSync(english), true, 'README.en.md is the file swapped in at publish time')
+  // Chinese README stays the repository's README.md — 1.5.3 shipped it inside the
+  // tarball, and the swap must not turn that into a permanent rename.
+  assert.match(
+    readFileSync(new URL('README.md', here), 'utf8'),
+    /^#\s*dsh-mcp-mini-manager/m,
+    'README.md must stay the repository README (the publish swap restores it)',
+  )
+  assert.match(
+    readFileSync(english, 'utf8'),
+    /^#\s*dsh-mcp-mini-manager/m,
+    'README.en.md must exist and carry the English title',
   )
 })
