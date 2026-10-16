@@ -4,7 +4,6 @@
   "version": "1.5.4",
   "type": "module",
   "main": "lib/index.js",
-  "readme": "README.en.md",
   "keywords": [
     "dsh",
     "dsh-plugin",

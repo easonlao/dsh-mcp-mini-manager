@@ -14,6 +14,7 @@
 ### 说明
 
 - `lib/` 只有 `VERSION` 常量跟着版本号走（`1.5.3` → `1.5.4`），运行逻辑与 1.5.3 相同。
+- **删掉 `package.json` 里的 `readme` 字段**：npm 会把该字段**原样**当成 packument 的 `.readme` 上报，于是 npm 包页显示的不是 README 正文，而是一行文件名。实测线上 1.5.3 的 `.readme` 长度正好 12 个字符，内容就是 `README.en.md`（同批未设该字段的 `dsh-unitverse` / `dsh-panda-calendar` / `dsh-skill-mini-manager` 都是完整正文，9–31 KB）。此后按「发布时临时用 `README.en.md` 覆盖 `README.md`、发完立刻 `git checkout -- README.md` 还原」的做法，让 npm 页面显示英文正文，中文正文仍留在仓库的 `README.md`。
 - 实测证据（宿主 `0.2.0-rc.2`，验收工具为仓库外的 `verify-compat.mjs`，判定直接复用 dshmarket 自己的函数）：改前 `unknown` → 改后 `compatible`；`profiles/web` 体检本插件无 peer 警告；单测 113 项全绿。
 
 ### 发布
