@@ -212,7 +212,10 @@ test('every CSS custom property is a token the installed DSH theme defines', () 
   const tokens = [...source.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1])
   assert.ok(tokens.length > 20, `expected many token reads, got ${tokens.length}`)
 
-  const themeRoot = join(
+  // 0.1.x 把 token 定义放在 `lib/styles/*.css`；0.2.x 起搬进了 `lib/client.js`
+  // （`lib/styles/` 只剩 brand-font.css）。两处都扫，才不会因为宿主换了布局
+  // 把"token 还在"误判成"token 没了"——实测 2026-10-16，宿主 0.2.0-rc.2。
+  const themeLib = join(
     homedir(),
     '.dsh',
     'profiles',
@@ -220,18 +223,23 @@ test('every CSS custom property is a token the installed DSH theme defines', () 
     '@deepseek-ai',
     'dsh-client-ui-theme',
     'lib',
-    'styles',
   )
-  if (!existsSync(themeRoot)) {
+  const themeStyles = join(themeLib, 'styles')
+  if (!existsSync(themeLib)) {
     // No installed theme to check against: keep the prefix rule as the gate.
     for (const token of tokens) assert.match(token, /^--(dsw|ds)-/)
     return
   }
   const defined = new Set()
-  for (const file of readdirSync(themeRoot)) {
-    if (!file.endsWith('.css')) continue
-    for (const match of readFileSync(join(themeRoot, file), 'utf8').matchAll(/--[a-z0-9-]+/g)) {
-      defined.add(match[0])
+  const harvest = (file) => {
+    if (!existsSync(file)) return
+    for (const match of readFileSync(file, 'utf8').matchAll(/--[a-z0-9-]+/g)) defined.add(match[0])
+  }
+  for (const file of ['client.js', 'index.js']) harvest(join(themeLib, file))
+  if (existsSync(themeStyles)) {
+    for (const file of readdirSync(themeStyles)) {
+      if (!file.endsWith('.css')) continue
+      harvest(join(themeStyles, file))
     }
   }
   assert.ok(defined.size > 100, `the theme should define many tokens, found ${defined.size}`)

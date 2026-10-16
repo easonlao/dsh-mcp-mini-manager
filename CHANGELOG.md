@@ -2,6 +2,25 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.5.4] - 2026-10-16
+
+### 修复
+
+- **补上宿主版本要求（peer 声明）**：本包此前没有 `peerDependencies`，社区市场只能把它判为 `unknown`。市场只认三类声明——`engines.dsh`，以及 `peerDependencies` 里既在**宿主包清单**内、又匹配 `@deepseek-ai/dsh*` 的项（`dshmarket/lib/discovery-compatibility.js` 的 `deriveHostCompatibility`）；一条都没有，插件就无法对外声明「我支持 0.2.x」。
+  - 现补 3 条，正是 `dsh.client.inject` 已声明的三个包：`@deepseek-ai/dsh-client-runtime` / `dsh-client-locale` / `dsh-client-ui-settings`，范围统一为 **`^0.1.0-rc.6 || ^0.2.0-rc.1`**。
+  - 为什么是两段式：只写 `^0.2.0-rc.1` 会把仍在 0.1.x 宿主上的用户判成 `incompatible`；两段式同时覆盖 `0.1.0-rc.6` / `0.1.0-rc.8` / `0.1.1-rc.2` / `0.2.0-rc.2` / `0.2.1-alpha.4`。**日后两条线若不可兼得，以 0.2.x 为准，放弃 0.1.x。**
+- **修正 `test/client.test.mjs` 里一条假设了旧目录布局的断言**：那条「每个 CSS 自定义属性都是宿主主题 token」的用例去读 `dsh-client-ui-theme/lib/styles/*.css`，而 0.2.x 把 token 定义搬进了 `lib/client.js`（`lib/styles/` 只剩 `brand-font.css`），于是它读到 0 个 token 便断言失败——**红的是测试的路径假设，不是 token 真的没了**。现同时扫 `lib/{client,index}.js` 与 `lib/styles/*.css`，在本机 0.2.0-rc.2 上重新成立（该用例真实核对 20 个宿主 token，全部有定义）。
+
+### 说明
+
+- `lib/` 只有 `VERSION` 常量跟着版本号走（`1.5.3` → `1.5.4`），运行逻辑与 1.5.3 相同。
+- 实测证据（宿主 `0.2.0-rc.2`，验收工具为仓库外的 `verify-compat.mjs`，判定直接复用 dshmarket 自己的函数）：改前 `unknown` → 改后 `compatible`；`profiles/web` 体检本插件无 peer 警告；单测 113 项全绿。
+
+### 发布
+
+- npm：`dsh-mcp-mini-manager@1.5.4`
+- GitHub：https://github.com/runcat-tommy/dsh-mcp-mini-manager
+
 ## [1.5.3] - 2026-10-13
 
 ### 文档
